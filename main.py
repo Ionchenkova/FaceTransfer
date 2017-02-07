@@ -1,10 +1,13 @@
-import sys
 import facedetect
+import cv2
+import sys
 
 imagePath = sys.argv[1]
 cascPath = sys.argv[2]
 
-faces = facedetect.getFaces(imagePath, cascPath, 30)
-
-for (x, y, w, h) in faces:
-    print '(x: %d, y: %d, w: %d, h: %d)' % (x, y, w, h)
+face = facedetect.getFace(imagePath, cascPath, 30)
+if face is None:
+    print('Found 0 or >1 faces')
+# else:
+#     cv2.imshow("cropped", face)
+#     cv2.waitKey(0)
