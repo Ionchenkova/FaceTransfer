@@ -10,19 +10,16 @@ IMAGE_SIZE = 128
 
 input_img = Input(shape=(IMAGE_SIZE,IMAGE_SIZE,1))
 
-x = Convolution2D(48, 3, 3, activation='relu', border_mode='same')(input_img)
-x = MaxPooling2D((2, 2), border_mode='same')(x)
-x = Convolution2D(40, 3, 3, activation='relu', border_mode='same')(x)
+x = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(input_img)
 x = MaxPooling2D((2, 2), border_mode='same')(x)
 x = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(x)
-x = MaxPooling2D((2, 2), border_mode='same')(x)
-x = Convolution2D(24, 3, 3, activation='relu', border_mode='same')(x)
 x = MaxPooling2D((2, 2), border_mode='same')(x)
 x = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(x)
 x = MaxPooling2D((2, 2), border_mode='same')(x)
 x = Convolution2D(8, 3, 3, activation='relu', border_mode='same')(x)
 x = MaxPooling2D((2, 2), border_mode='same')(x)
 x = Convolution2D(8, 3, 3, activation='relu', border_mode='same')(x)
+
 encoded = MaxPooling2D((2, 2), border_mode='same')(x)
 
 # at this point the representation is (8, 4, 4) i.e. 128-dimensional
@@ -33,13 +30,9 @@ x = Convolution2D(8, 3, 3, activation='relu', border_mode='same')(x)
 x = UpSampling2D((2, 2))(x)
 x = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(x)
 x = UpSampling2D((2, 2))(x)
-x = Convolution2D(24, 3, 3, activation='relu', border_mode='same')(x)
-x = UpSampling2D((2, 2))(x)
 x = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(x)
 x = UpSampling2D((2, 2))(x)
-x = Convolution2D(40, 3, 3, activation='relu', border_mode='same')(x)
-x = UpSampling2D((2, 2))(x)
-x = Convolution2D(48, 3, 3, activation='relu', border_mode='same')(x)
+x = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(x)
 x = UpSampling2D((2, 2))(x)
 
 decoded = Convolution2D(1, 3, 3, activation='sigmoid', border_mode='same')(x)
