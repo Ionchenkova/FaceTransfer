@@ -40,7 +40,7 @@ decoded = Convolution2D(1, 3, 3, activation='sigmoid', border_mode='same')(x)
 autoencoder = Model(input_img, decoded)
 autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-img = cv2.imread('/Users/Maria/Documents/FaceTransfer/128.jpg')
+img = cv2.imread('/Users/Maria/Documents/FaceTransfer/input_images/128.jpg')
 grayImg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) # type: numpy.ndarray
 
 x_train = img_to_array(grayImg)  # this is a Numpy array with shape (28, 28, 1)
@@ -51,7 +51,7 @@ print(x_train.shape)
 
 autoencoder.fit(x_train,
                 x_train,
-                nb_epoch=100,
+                nb_epoch=5000,
                 batch_size=1,
                 shuffle=True,
                 validation_data=(x_train, x_train),
