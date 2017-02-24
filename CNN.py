@@ -5,10 +5,18 @@ from keras.layers import Input, Dense, Convolution2D, MaxPooling2D, UpSampling2D
 from keras.models import Model
 from keras.callbacks import TensorBoard
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array
+import time
+
+class Profiler(object):
+    def __enter__(self):
+        self._startTime = time.time()
+    
+    def __exit__(self, type, value, traceback):
+        print "Elapsed time: {:.3f} sec".format(time.time() - self._startTime)
 
 IMAGE_SIZE = 128
 
-input_img = Input(shape=(IMAGE_SIZE,IMAGE_SIZE,1))
+input_img = Input(shape=(IMAGE_SIZE, IMAGE_SIZE, 1))
 
 x = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(input_img)
 x = MaxPooling2D((2, 2), border_mode='same')(x)
@@ -49,9 +57,10 @@ x_train = x_train.astype('float32') / 255.
 x_train = x_train.reshape((1,) + x_train.shape)  # this is a Numpy array with shape (1, 28, 28, 1)
 print(x_train.shape)
 
-autoencoder.fit(x_train,
+with Profiler() as p:
+    autoencoder.fit(x_train,
                 x_train,
-                nb_epoch=5000,
+                nb_epoch=1000,
                 batch_size=1,
                 shuffle=True,
                 validation_data=(x_train, x_train),
