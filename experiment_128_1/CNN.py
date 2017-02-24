@@ -18,25 +18,32 @@ IMAGE_SIZE = 128
 
 input_img = Input(shape=(IMAGE_SIZE, IMAGE_SIZE, 1))
 
-x = Convolution2D(32, 9, 9, activation='relu', border_mode='same')(input_img)
-print(x.shape)
-#x = MaxPooling2D((2, 2), border_mode='same')(x)
-x = Convolution2D(16, 9, 9, activation='relu', border_mode='same')(x)
-print(x.shape)
+x = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(input_img)
 x = MaxPooling2D((2, 2), border_mode='same')(x)
-x = Convolution2D(16, 9, 9, activation='relu', border_mode='same')(x)
-print(x.shape)
+x = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(x)
+x = MaxPooling2D((2, 2), border_mode='same')(x)
+x = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(x)
+x = MaxPooling2D((2, 2), border_mode='same')(x)
+x = Convolution2D(8, 3, 3, activation='relu', border_mode='same')(x)
+x = MaxPooling2D((2, 2), border_mode='same')(x)
+x = Convolution2D(8, 3, 3, activation='relu', border_mode='same')(x)
 
 encoded = MaxPooling2D((2, 2), border_mode='same')(x)
 
-x = Convolution2D(16, 9, 9, activation='relu', border_mode='same')(encoded)
+# at this point the representation is (8, 4, 4) i.e. 128-dimensional
+
+x = Convolution2D(8, 3, 3, activation='relu', border_mode='same')(encoded)
 x = UpSampling2D((2, 2))(x)
-x = Convolution2D(16, 9, 9, activation='relu', border_mode='same')(x)
-#x = UpSampling2D((2, 2))(x)
-x = Convolution2D(32, 9, 9, activation='relu', border_mode='same')(x)
+x = Convolution2D(8, 3, 3, activation='relu', border_mode='same')(x)
+x = UpSampling2D((2, 2))(x)
+x = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(x)
+x = UpSampling2D((2, 2))(x)
+x = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(x)
+x = UpSampling2D((2, 2))(x)
+x = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(x)
 x = UpSampling2D((2, 2))(x)
 
-decoded = Convolution2D(1, 9, 9, activation='sigmoid', border_mode='same')(x)
+decoded = Convolution2D(1, 3, 3, activation='sigmoid', border_mode='same')(x)
 
 autoencoder = Model(input_img, decoded)
 autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
@@ -53,7 +60,7 @@ print(x_train.shape)
 with Profiler() as p:
     autoencoder.fit(x_train,
                 x_train,
-                nb_epoch=100,
+                nb_epoch=5000,
                 batch_size=1,
                 shuffle=True,
                 validation_data=(x_train, x_train),
