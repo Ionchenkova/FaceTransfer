@@ -1,12 +1,12 @@
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
 from keras.layers import Input, Dense, Convolution2D, MaxPooling2D, UpSampling2D
 from keras.models import Model
 from keras.callbacks import TensorBoard
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array
 from keras.optimizers import SGD
+import matplotlib.pyplot as plt
 import time
+import numpy as np
+import cv2
 
 IMAGE_SIZE = 128
 NUMBER_OF_EPOCH = 100
@@ -44,9 +44,9 @@ def showImages(first, second, third):
 def createTrainDataFromImage(imagePath):
     img = cv2.imread(imagePath)
     grayImg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) # type: numpy.ndarray
-    x_train = img_to_array(grayImg)  # this is a Numpy array with shape (28, 28, 1)
+    x_train = img_to_array(grayImg) # this is a Numpy array
     x_train = x_train.astype('float32') / 255.
-    x_train = x_train.reshape((1,) + x_train.shape)  # this is a Numpy array with shape (1, 28, 28, 1)
+    x_train = x_train.reshape((1,) + x_train.shape)
     return x_train
 
 def foundCorrelation(firstArray2D, secondArray2D):
@@ -93,24 +93,16 @@ def train(model, train_data, nb_epoch):
                 callbacks=[TensorBoard(log_dir='/tmp/autoencoder')]) # log: tensorboard --logdir=/tmp/autoencoder
 
 if __name__ == '__main__':
-
     # create and train model
-
     autoencoder = createModel()
     own_train_data = createTrainDataFromImage('/Users/Maria/Documents/FaceTransfer/input_images/128.jpg')
     train(model=autoencoder, train_data=own_train_data, nb_epoch=NUMBER_OF_EPOCH)
     decoded_imgs = autoencoder.predict(own_train_data)
-
     # found correlation
-
     foundCorrelation(own_train_data[0], decoded_imgs[0])
-
     # use weights for second image
-
     res_train = createTrainDataFromImage('/Users/Maria/Documents/FaceTransfer/input_images/mila_128.jpg')
     result_model = createModelFromModel(autoencoder)
     result_img = result_model.predict(res_train)
-
     # show images
-
     showImages(first=own_train_data[0], second=decoded_imgs[0], third=result_img[0])
