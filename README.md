@@ -2,4 +2,4 @@
 
 #### Python + Keras + OpenCV
 
-Now experiment №1 gives the best result for 128 size image
+experiment_weights_5: Used Dropout for a second model and train the model.
