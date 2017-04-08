@@ -123,6 +123,6 @@ if __name__ == '__main__':
     train(model=autoencoder, train_data_x=own_train_data_x, train_data_y=own_train_data_x, test_data=own_train_data_x, nb_epoch=NUMBER_OF_EPOCH)
     decoded_imgs = autoencoder.predict(own_train_data_x)
     result_model = createModelFromModel(autoencoder)
-    train(model=result_model, train_data_x=own_test_data, train_data_y=own_train_data_x, test_data=own_test_data, nb_epoch=50)
+    train(model=result_model, train_data_x=own_test_data, train_data_y=own_train_data_x, test_data=own_test_data, nb_epoch=1)
     result_img = result_model.predict(own_test_data)
     showImages(first=own_train_data_x[0], second=decoded_imgs[0], third=own_test_data[0], fourth=result_img[0])
