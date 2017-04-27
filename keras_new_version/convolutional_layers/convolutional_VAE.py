@@ -47,23 +47,23 @@ class VAE:
     def __init__(self):
         # CODER
         self.input_layer = Input(shape=Settings.full_img_size)
-        self.conv_layer_1 = Conv2D(filters=1, 
-                                    kernel_size=(3, 3), 
-                                    padding='same',
-                                    strides=(2, 2), 
-                                    activation='relu')(self.input_layer) # (32,32,1)
-        #self.avrg_pool_layer_1 = AveragePooling2D(pool_size=(2, 2))(self.conv_layer_1) # (32,32,1)
-        self.conv_layer_2 = Conv2D(filters=16, 
-                                    kernel_size=(3, 3), 
+        self.conv_layer_1 = Conv2D(filters=8, 
+                                    kernel_size=(7, 7), 
                                     padding='same',
                                     strides=(1, 1), 
+                                    activation='relu')(self.input_layer) # (64,64,1)
+        #self.avrg_pool_layer_1 = AveragePooling2D(pool_size=(2, 2))(self.conv_layer_1) # (32,32,1)
+        self.conv_layer_2 = Conv2D(filters=16, 
+                                    kernel_size=(5, 5), 
+                                    padding='same',
+                                    strides=(2, 2), 
                                     activation='relu')(self.conv_layer_1) # (32,32,16)
-        self.avrg_pool_layer_2 = AveragePooling2D(pool_size=(2, 2))(self.conv_layer_2) # (16,16,16)
+        #self.avrg_pool_layer_2 = AveragePooling2D(pool_size=(2, 2))(self.conv_layer_2) # (16,16,16)
         self.conv_layer_3 = Conv2D(filters=16,
                                     kernel_size=(3, 3),
                                     padding='same',
-                                    strides=(1, 1),  
-                                    activation='relu')(self.avrg_pool_layer_2) # (16,16,16)
+                                    strides=(2, 2),  
+                                    activation='relu')(self.conv_layer_2) # (16,16,16)
         #self.avrg_pool_layer_3 = AveragePooling2D(pool_size=(2, 2))(self.conv_layer_3) # (8,8,16)
         self.conv_layer_4 = Conv2D(filters=16,
                                     kernel_size=(3, 3),
@@ -95,14 +95,14 @@ class VAE:
                                     strides=(1, 1),
                                     activation='relu')
         self.up_sampling_conv_3 = UpSampling2D()
-        self.decoder_conv_2 = Conv2D(filters=16,
-                                    kernel_size=(3, 3),
+        self.decoder_conv_2 = Conv2D(filters=8,
+                                    kernel_size=(5, 5),
                                     padding='same',
                                     strides=(1, 1),
                                     activation='relu')
         self.up_sampling_conv_2 = UpSampling2D()
         self.decoder_conv_1 = Conv2D(filters=1,
-                                    kernel_size=(3, 3),
+                                    kernel_size=(7, 7),
                                     padding='same',
                                     strides=(1, 1),
                                     activation='sigmoid')
