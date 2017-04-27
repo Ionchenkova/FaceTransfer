@@ -5,7 +5,9 @@ from keras import backend as K
 from keras import metrics
 from scipy import misc
 from glob import glob
+from matplotlib.widgets import Slider
 
+import pylab
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -18,7 +20,7 @@ class Settings:
     latent_dim = 2
     intermediate_dim = full_img_size / 4
     epsilon = 1.0
-    num_of_epoch = 100
+    num_of_epoch = 10
     log = True
 
 def load_image(image_path):
@@ -30,18 +32,35 @@ def load_image(image_path):
     return x_train
 
 def show_images(decoder, n=10, img_size=Settings.img_size_rows):
-    figure = np.zeros((img_size * n, img_size * n))
-    grid_x = np.linspace(-1.0, 1.0, n)
-    grid_y = np.linspace(-1.0, 1.0, n)
-    for i, yi in enumerate(grid_x):
-        for j, xi in enumerate(grid_y):
-            z_sample = np.array([[xi, yi]]) * Settings.epsilon
-            x_decoded = decoder.predict(z_sample) # we ganerate latent layer with latent_dim
-            image = x_decoded[0].reshape(img_size, img_size)
-            figure[i * img_size: (i + 1) * img_size,
-                    j * img_size: (j + 1) * img_size] = image
-    plt.figure(figsize=(6, 6))
-    plt.imshow(figure, cmap='Greys_r')
+    ax = plt.subplot(111)
+    plt.subplots_adjust(left=0.25, bottom=0.25)
+
+    z_sample = np.array([[0.0, 0.0]]) * Settings.epsilon
+    x_decoded = decoder.predict(z_sample)
+    image = x_decoded[0].reshape(img_size, img_size)
+
+    img = ax.imshow(image, cmap='Greys_r')
+    cb = plt.colorbar(img)
+    axcolor = 'lightgoldenrodyellow'
+
+    ax_cmin = plt.axes([0.25, 0.1, 0.65, 0.03])
+    ax_cmax  = plt.axes([0.25, 0.15, 0.65, 0.03])
+
+    s_first = Slider(ax_cmin, 'first', -5.0, 5.0, valinit=0)
+    s_second = Slider(ax_cmax, 'second', -5.0, 5.0, valinit=0)
+
+    def update(val):
+       _first = s_first.val
+       _second = s_second.val
+       z_sample = np.array([[_first, _second]]) * Settings.epsilon
+       x_decoded = decoder.predict(z_sample)
+       image = x_decoded[0].reshape(img_size, img_size)
+       ax.imshow(image, cmap='Greys_r')
+       plt.draw()
+
+    s_first.on_changed(update)
+    s_second.on_changed(update)
+
     plt.show()
 
 class VAE:
@@ -101,5 +120,5 @@ if __name__ == "__main__":
               batch_size=Settings.batch_size,
               validation_data=(x_train, x_train))
 
-    show_images(decoder, n=10)
+    show_images(decoder, n=30)
 
