@@ -30,8 +30,8 @@ def load_image(image_path):
 
 def show_images(decoder, n=10, img_size=Settings.img_size_rows):
     figure = np.zeros((img_size * n, img_size * n))
-    grid_x = np.linspace(-1.0, 1.0, n)
-    grid_y = np.linspace(-1.0, 1.0, n)
+    grid_x = np.linspace(-0.5, 0.5, n)
+    grid_y = np.linspace(-0.5, 0.5, n)
     for i, yi in enumerate(grid_x):
         for j, xi in enumerate(grid_y):
             z_sample = np.array([[xi, yi]]) * Settings.epsilon
@@ -47,25 +47,29 @@ class VAE:
     def __init__(self):
         # CODER
         self.input_layer = Input(shape=Settings.full_img_size)
-        self.conv_layer_1 = Conv2D(filters=8, 
+        self.conv_layer_1 = Conv2D(filters=1, 
                                     kernel_size=(3, 3), 
-                                    padding='same', 
-                                    activation='relu')(self.input_layer) # (64,64,1)
-        self.avrg_pool_layer_1 = AveragePooling2D(pool_size=(2, 2))(self.conv_layer_1) # (32,32,1)
+                                    padding='same',
+                                    strides=(2, 2), 
+                                    activation='relu')(self.input_layer) # (32,32,1)
+        #self.avrg_pool_layer_1 = AveragePooling2D(pool_size=(2, 2))(self.conv_layer_1) # (32,32,1)
         self.conv_layer_2 = Conv2D(filters=16, 
                                     kernel_size=(3, 3), 
-                                    padding='same', 
-                                    activation='relu')(self.avrg_pool_layer_1) # (32,32,16)
+                                    padding='same',
+                                    strides=(1, 1), 
+                                    activation='relu')(self.conv_layer_1) # (32,32,16)
         self.avrg_pool_layer_2 = AveragePooling2D(pool_size=(2, 2))(self.conv_layer_2) # (16,16,16)
         self.conv_layer_3 = Conv2D(filters=16,
                                     kernel_size=(3, 3),
-                                    padding='same', 
+                                    padding='same',
+                                    strides=(1, 1),  
                                     activation='relu')(self.avrg_pool_layer_2) # (16,16,16)
-        self.avrg_pool_layer_3 = AveragePooling2D(pool_size=(2, 2))(self.conv_layer_3) # (8,8,16)
+        #self.avrg_pool_layer_3 = AveragePooling2D(pool_size=(2, 2))(self.conv_layer_3) # (8,8,16)
         self.conv_layer_4 = Conv2D(filters=16,
                                     kernel_size=(3, 3),
-                                    padding='same', 
-                                    activation='relu')(self.avrg_pool_layer_3) # (8,8,8)
+                                    padding='same',
+                                    strides=(1, 1),  
+                                    activation='relu')(self.conv_layer_3) # (16,16,16)
         self.flat_layer = Flatten()(self.conv_layer_4)
         self.hidden_layer = Dense(Settings.intermediate_dim, activation='relu')(self.flat_layer)
         self.z_mean = Dense(Settings.latent_dim)(self.hidden_layer)
@@ -82,29 +86,32 @@ class VAE:
         self.decoder_conv_4 = Conv2D(filters=16,
                                     kernel_size=(3, 3),
                                     padding='same',
+                                    strides=(1, 1),
                                     activation='relu')
-        self.up_sampling_conv_4 = UpSampling2D()
+        #self.up_sampling_conv_4 = UpSampling2D()
         self.decoder_conv_3 = Conv2D(filters=16,
                                     kernel_size=(3, 3),
                                     padding='same',
+                                    strides=(1, 1),
                                     activation='relu')
         self.up_sampling_conv_3 = UpSampling2D()
         self.decoder_conv_2 = Conv2D(filters=16,
                                     kernel_size=(3, 3),
                                     padding='same',
+                                    strides=(1, 1),
                                     activation='relu')
         self.up_sampling_conv_2 = UpSampling2D()
         self.decoder_conv_1 = Conv2D(filters=1,
                                     kernel_size=(3, 3),
                                     padding='same',
+                                    strides=(1, 1),
                                     activation='sigmoid')
         # DECODER (connected with full VAE)
         self.hidden_decoded = self.decoder_hidden(self.z)
         self.flat_decoded = self.decoder_flat(self.hidden_decoded)
         self.reshape_decoded = self.decoder_reshape(self.flat_decoded)
         self.conv_4_decoded = self.decoder_conv_4(self.reshape_decoded)
-        self.up_sampling_conv_4_decoded = self.up_sampling_conv_4(self.conv_4_decoded)
-        self.conv_3_decoded = self.decoder_conv_3(self.up_sampling_conv_4_decoded)
+        self.conv_3_decoded = self.decoder_conv_3(self.conv_4_decoded)
         self.up_sampling_conv_3_decoded = self.up_sampling_conv_3(self.conv_3_decoded)
         self.conv_2_decoded = self.decoder_conv_2(self.up_sampling_conv_3_decoded)
         self.up_sampling_conv_2_decoded = self.up_sampling_conv_2(self.conv_2_decoded)
@@ -136,8 +143,7 @@ class VAE:
         flat_decoded = self.decoder_flat(hidden_decoded)
         reshape_decoded = self.decoder_reshape(flat_decoded)
         conv_4_decoded = self.decoder_conv_4(reshape_decoded)
-        up_sampling_conv_4_decoded = self.up_sampling_conv_4(conv_4_decoded)
-        conv_3_decoded = self.decoder_conv_3(up_sampling_conv_4_decoded)
+        conv_3_decoded = self.decoder_conv_3(conv_4_decoded)
         up_sampling_conv_3_decoded = self.up_sampling_conv_3(conv_3_decoded)
         conv_2_decoded = self.decoder_conv_2(up_sampling_conv_3_decoded)
         up_sampling_conv_2_decoded = self.up_sampling_conv_2(conv_2_decoded)
