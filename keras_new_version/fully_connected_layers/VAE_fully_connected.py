@@ -4,6 +4,7 @@ from keras.models import Model
 from keras import backend as K
 from keras import metrics
 from scipy import misc
+from glob import glob
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,6 +24,9 @@ class Settings:
 def load_image(image_path):
     grayImage = misc.imread(image_path, mode="L") # shape is (x,x)
     x_train = grayImage.reshape((1,) + grayImage.shape) # shape is (1,x,x)
+    x_train = x_train.astype('float32') / 255.
+    x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:]))) # shape is (1, x)
+    print(x_train.shape)
     return x_train
 
 def show_images(decoder, n=10, img_size=Settings.img_size_rows):
@@ -80,17 +84,11 @@ class VAE:
         return Model(self.decoder_input, self._x_decoded_mean)
 
 if __name__ == "__main__":
-    load_x_train = load_image("/Users/Maria/Documents/FaceTransfer/input_images/boy_64.jpg") # first image
-    load_x_test = load_image("/Users/Maria/Documents/FaceTransfer/input_images/girl_64.jpg") # second image
-
-    x_train = np.concatenate((load_x_train, load_x_test)) # for training we use two image
-    x_test = np.concatenate((load_x_train, load_x_test))
-
-    x_train = x_train.astype('float32') / 255.
-    x_test = x_test.astype('float32') / 255.
-    x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:]))) # shape is (1, x)
-    x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))
-
+    
+    images = glob("/Users/Maria/Documents/input_faces/*.jpg")
+    load_x_train = [load_image(image) for image in images]
+    x_train = np.concatenate(load_x_train)
+    
     vae = VAE()
     vae_model = vae.get_VAE_model()
     encoder = vae.get_encoder_model()
@@ -101,13 +99,7 @@ if __name__ == "__main__":
               shuffle=True,
               epochs=Settings.num_of_epoch,
               batch_size=Settings.batch_size,
-              validation_data=(x_test, x_test))
+              validation_data=(x_train, x_train))
 
     show_images(decoder, n=10)
-
-
-
-
-
-
 
