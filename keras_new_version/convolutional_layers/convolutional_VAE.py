@@ -141,7 +141,7 @@ class VAE:
         normal = K.random_normal(shape=(Settings.batch_size, Settings.latent_dim),
                                  mean=0.,
                                  stddev=Settings.epsilon)
-        return z_mean + z_random * normal
+        return z_mean + K.exp(z_random) * normal
     
     def loss(self, x, x_decoded_mean):
         x = K.flatten(x)

@@ -86,7 +86,7 @@ class VAE:
         normal = K.random_normal(shape=(Settings.batch_size, Settings.latent_dim), 
                                  mean=0.,
                                  stddev=Settings.epsilon)
-        return z_mean + z_random * normal
+        return z_mean + K.exp(z_random) * normal # N(mu, sigma**2)
 
     def loss(self, x, x_decoded_mean):
         xent_loss = Settings.full_img_size * metrics.binary_crossentropy(x, x_decoded_mean)
