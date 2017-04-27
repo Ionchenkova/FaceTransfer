@@ -1,5 +1,3 @@
 # FaceTransfer
 
-#### Python + Keras + OpenCV
-
-experiment_weights_5: Used Dropout for a second model and train the model.
+#### Python 2.7 + Keras (old version if 1. and new version is 2.)
