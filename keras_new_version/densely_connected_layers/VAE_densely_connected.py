@@ -21,8 +21,8 @@ class Settings:
     high_dim = 256
     low_dim = 64
     epsilon = 1.0
-    min_input = -1.0
-    max_input = 1.0
+    min_input = -2.0
+    max_input = 2.0
     num_of_epoch = 100
     log = True
 
@@ -72,9 +72,11 @@ class VAE:
         self.input_layer = Input(batch_shape=(Settings.batch_size, Settings.full_img_size))
         self.high_layer = Dense(Settings.high_dim, activation='relu')(self.input_layer)
         self.low_layer = Dense(Settings.low_dim, activation='relu')(self.high_layer)
+        # latent distribution parameterized by hidden encoding
+        # z ~ N(z_mean, np.exp(z_log_sigma)**2)
         self.z_mean = Dense(Settings.latent_dim)(self.low_layer)
-        self.z_random = Dense(Settings.latent_dim)(self.low_layer)
-        self.z = Lambda(self.sampling)([self.z_mean, self.z_random])
+        self.z_log_sigma = Dense(Settings.latent_dim)(self.low_layer)
+        self.z = Lambda(self.sampling)([self.z_mean, self.z_log_sigma])
         # DECODER (connected with VAE)
         self.decoder_h_low = Dense(Settings.low_dim, activation='relu')
         self.decoder_h_high = Dense(Settings.high_dim, activation='relu')
@@ -89,15 +91,17 @@ class VAE:
         self._x_decoded_mean = self.decoder_mean(self._h_decoded_high)
 
     def sampling(self, hidden_layers):
-        z_mean, z_random = hidden_layers
+        z_mean, z_log_sigma = hidden_layers
         normal = K.random_normal(shape=(Settings.batch_size, Settings.latent_dim), 
                                  mean=0.,
                                  stddev=Settings.epsilon)
-        return z_mean + K.exp(z_random) * normal # N(mu, sigma**2)
+        return z_mean + K.exp(z_log_sigma) * normal # N(mu, sigma**2)
 
     def loss(self, x, x_decoded_mean):
         xent_loss = Settings.full_img_size * metrics.binary_crossentropy(x, x_decoded_mean)
-        kl_loss = - 0.5 * K.sum(1 + self.z_random - K.square(self.z_mean) - K.exp(self.z_random), axis=-1)
+        # Kullback-Leibler divergence
+        # KL[q(z|x) || p(z)]
+        kl_loss = - 0.5 * K.sum(1 + self.z_log_sigma - K.square(self.z_mean) - K.exp(self.z_log_sigma), axis=-1)
         return xent_loss + kl_loss
 
     def get_VAE_model(self):
@@ -119,7 +123,7 @@ if __name__ == "__main__":
     vae_model = vae.get_VAE_model()
     encoder = vae.get_encoder_model()
     decoder = vae.get_decoder_model()
-
+    vae_model.summary() # log
     vae_model.compile(optimizer='rmsprop', loss=vae.loss)
     vae_model.fit(x_train, x_train,
               shuffle=True,
