@@ -18,9 +18,12 @@ class Settings:
     full_img_size = img_size_rows * img_size_cols * img_size_chnl
     batch_size = 1
     latent_dim = 2
-    intermediate_dim = full_img_size / 4
+    high_dim = 256
+    low_dim = 64
     epsilon = 1.0
-    num_of_epoch = 10
+    min_input = -1.0
+    max_input = 1.0
+    num_of_epoch = 100
     log = True
 
 def load_image(image_path):
@@ -46,8 +49,8 @@ def show_images(decoder, n=10, img_size=Settings.img_size_rows):
     ax_cmin = plt.axes([0.25, 0.1, 0.65, 0.03])
     ax_cmax  = plt.axes([0.25, 0.15, 0.65, 0.03])
 
-    s_first = Slider(ax_cmin, 'first', -5.0, 5.0, valinit=0)
-    s_second = Slider(ax_cmax, 'second', -5.0, 5.0, valinit=0)
+    s_first = Slider(ax_cmin, 'first', Settings.min_input, Settings.max_input, valinit=0)
+    s_second = Slider(ax_cmax, 'second', Settings.min_input, Settings.max_input, valinit=0)
 
     def update(val):
        _first = s_first.val
@@ -67,19 +70,23 @@ class VAE:
     def __init__(self):
         # CODER
         self.input_layer = Input(batch_shape=(Settings.batch_size, Settings.full_img_size))
-        self.intermediate_layer = Dense(Settings.intermediate_dim, activation='relu')(self.input_layer)
-        self.z_mean = Dense(Settings.latent_dim)(self.intermediate_layer)
-        self.z_random = Dense(Settings.latent_dim)(self.intermediate_layer)
+        self.high_layer = Dense(Settings.high_dim, activation='relu')(self.input_layer)
+        self.low_layer = Dense(Settings.low_dim, activation='relu')(self.high_layer)
+        self.z_mean = Dense(Settings.latent_dim)(self.low_layer)
+        self.z_random = Dense(Settings.latent_dim)(self.low_layer)
         self.z = Lambda(self.sampling)([self.z_mean, self.z_random])
         # DECODER (connected with VAE)
-        self.decoder_h = Dense(Settings.intermediate_dim, activation='relu')
+        self.decoder_h_low = Dense(Settings.low_dim, activation='relu')
+        self.decoder_h_high = Dense(Settings.high_dim, activation='relu')
         self.decoder_mean = Dense(Settings.full_img_size, activation='sigmoid')
-        self.h_decoded = self.decoder_h(self.z)
-        self.x_decoded_mean = self.decoder_mean(self.h_decoded)
+        self.h_decoded_low = self.decoder_h_low(self.z)
+        self.h_decoded_high = self.decoder_h_high(self.h_decoded_low)
+        self.x_decoded_mean = self.decoder_mean(self.h_decoded_high)
         # DECODER
         self.decoder_input = Input(shape=(Settings.latent_dim,))
-        self._h_decoded = self.decoder_h(self.decoder_input)
-        self._x_decoded_mean = self.decoder_mean(self._h_decoded)
+        self._h_decoded_low = self.decoder_h_low(self.decoder_input)
+        self._h_decoded_high = self.decoder_h_high(self._h_decoded_low)
+        self._x_decoded_mean = self.decoder_mean(self._h_decoded_high)
 
     def sampling(self, hidden_layers):
         z_mean, z_random = hidden_layers
