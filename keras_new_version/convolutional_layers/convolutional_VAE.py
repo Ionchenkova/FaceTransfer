@@ -20,7 +20,9 @@ class Settings:
     latent_dim = 2
     intermediate_dim = 128
     epsilon = 1.0
-    num_of_epoch = 100
+    num_of_epoch = 200
+    min_input = -1.0
+    max_input = 1.0
     log = True
 
 def load_image(image_path):
@@ -45,8 +47,8 @@ def show_images(decoder, n=10, img_size=Settings.img_size_rows):
     ax_cmin = plt.axes([0.25, 0.1, 0.65, 0.03])
     ax_cmax  = plt.axes([0.25, 0.15, 0.65, 0.03])
     
-    s_first = Slider(ax_cmin, 'first', -5.0, 5.0, valinit=0)
-    s_second = Slider(ax_cmax, 'second', -5.0, 5.0, valinit=0)
+    s_first = Slider(ax_cmin, 'first', Settings.min_input, Settings.max_input, valinit=0)
+    s_second = Slider(ax_cmax, 'second', Settings.min_input, Settings.max_input, valinit=0)
     
     def update(val):
         _first = s_first.val
