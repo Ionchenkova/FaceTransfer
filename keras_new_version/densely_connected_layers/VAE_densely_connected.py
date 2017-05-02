@@ -21,8 +21,8 @@ class Settings:
     high_dim = 256
     low_dim = 64
     epsilon = 1.0
-    min_input = -2.0
-    max_input = 2.0
+    min_input = -3.0
+    max_input = 3.0
     num_of_epoch = 100
     log = True
 
@@ -98,10 +98,11 @@ class VAE:
         return z_mean + K.exp(z_log_sigma) * normal # N(mu, sigma**2)
 
     def loss(self, x, x_decoded_mean):
+        # loss = reconstruction loss + KL loss
         xent_loss = Settings.full_img_size * metrics.binary_crossentropy(x, x_decoded_mean)
         # Kullback-Leibler divergence
         # KL[q(z|x) || p(z)]
-        kl_loss = - 0.5 * K.sum(1 + self.z_log_sigma - K.square(self.z_mean) - K.exp(self.z_log_sigma), axis=-1)
+        kl_loss = 0.5 * K.sum(K.exp(self.z_log_sigma) + K.square(self.z_mean) - 1. - self.z_log_sigma, axis=1)
         return xent_loss + kl_loss
 
     def get_VAE_model(self):
