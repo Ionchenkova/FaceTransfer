@@ -1,0 +1,4 @@
+import densely_connected_layers.VAE_densely_connected as dense_VAE
+import convolutional_layers.convolutional_VAE as conv_VAE
+import discriminant_model
+import sys

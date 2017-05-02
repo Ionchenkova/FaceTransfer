@@ -172,7 +172,6 @@ class VAE:
         return Model(decoder_input, conv_2_decoded)
 
 if __name__ == "__main__":
-    
     images = glob("/Users/Maria/Documents/input_faces/*.jpg")
     load_x_train = [load_image(image) for image in images]
     x_train = np.concatenate(load_x_train)
