@@ -10,65 +10,31 @@ from glob import glob
 # 1 is real
 # 0 is fake
 
+EPOCH = 50
+
 # CONV
 
-train_images = glob("/Users/Maria/Documents/input_faces/train/*.jpg")
-test_images = glob("/Users/Maria/Documents/input_faces/test/*.jpg")
+train_images = glob("/Users/Maria/Documents/input_faces/train/*.jpg") # 9 images now
+test_images = glob("/Users/Maria/Documents/input_faces/test/*.jpg") # 9 images now
 load_x_train_conv = [conv_VAE.load_image(image) for image in train_images]
 load_x_test_conv = [conv_VAE.load_image(image) for image in test_images]
 
 # first is real images
 
 x_train_conv = np.concatenate(load_x_train_conv)
+print 'x_train_conv shape is ', x_train_conv.shape
 x_test_conv = np.concatenate(load_x_test_conv)
 
 y_train_conv = [1] * len(load_x_train_conv)
 y_test_conv = [1] * len(load_x_test_conv)
 
-#-----------
+#--------------------
 
-conv_VAE.Settings.num_of_epoch = 100
+all_real_images_conv = np.concatenate([x_train_conv, x_test_conv]) # all real images, shape is (18, 64, 64, 1)
 
-vae = conv_VAE.VAE()
-vae_model = vae.get_VAE_model()
-encoder = vae.get_encoder_model()
-decoder = vae.get_decoder_model()
-    
-vae_model.compile(optimizer='rmsprop', loss=vae.loss)
-vae_model.summary() # log
-vae_model.fit(x_train_conv, x_train_conv,
-                shuffle=True,
-                epochs=conv_VAE.Settings.num_of_epoch,
-                batch_size=conv_VAE.Settings.batch_size,
-                validation_data=(x_train_conv, x_train_conv))
+#--------------------
 
-n = 3 # 9 fake images
-img_size = 64
-grid_x = np.linspace(-2.0, 2.0, n)
-grid_y = np.linspace(-2.0, 2.0, n)
-
-all_labels_train_conv = y_train_conv + [0] * (n*n)
-all_images_train_conv = x_train_conv
-
-generated_images_train_conv = []
-
-for i, yi in enumerate(grid_x):
-    for j, xi in enumerate(grid_y):
-        z_sample = np.array([[xi, yi]])
-        z_sample = np.tile(z_sample, conv_VAE.Settings.batch_size).reshape(conv_VAE.Settings.batch_size, conv_VAE.Settings.latent_dim)
-        x_decoded = decoder.predict(z_sample, batch_size=conv_VAE.Settings.batch_size)
-        img = x_decoded[0].reshape(img_size, img_size) # (64,64)
-        img = img.reshape((1,) + img.shape) # (1,64,64)
-        img = img.astype('float32') / 255.
-        img = img.reshape((img.shape[0],) + conv_VAE.Settings.full_img_size) # (1,64,64,1)
-        generated_images_train_conv.append(img)
-
-all_images_train_conv = np.concatenate([all_images_train_conv, np.concatenate(generated_images_train_conv)])
-print 'all_images_train_conv.shape is ', all_images_train_conv.shape
-
-#-----------
-
-conv_VAE.Settings.num_of_epoch = 100
+conv_VAE.Settings.num_of_epoch = EPOCH
 
 vae = conv_VAE.VAE()
 vae_model = vae.get_VAE_model()
@@ -77,21 +43,18 @@ decoder = vae.get_decoder_model()
 
 vae_model.compile(optimizer='rmsprop', loss=vae.loss)
 vae_model.summary() # log
-vae_model.fit(x_test_conv, x_test_conv,
+vae_model.fit(all_real_images_conv, all_real_images_conv,
               shuffle=True,
               epochs=conv_VAE.Settings.num_of_epoch,
               batch_size=conv_VAE.Settings.batch_size,
-              validation_data=(x_test_conv, x_test_conv))
+              validation_data=(all_real_images_conv, all_real_images_conv))
 
 n = 3 # 9 fake images
 img_size = 64
-grid_x = np.linspace(-2.0, 2.0, n)
-grid_y = np.linspace(-2.0, 2.0, n)
+grid_x = np.linspace(-1.0, 1.0, n)
+grid_y = np.linspace(-1.0, 1.0, n)
 
-all_labels_test_conv = y_test_conv + [0] * (n*n)
-all_images_test_conv = x_test_conv
-
-generated_images_test_conv = []
+generated_images_conv = []
 
 for i, yi in enumerate(grid_x):
     for j, xi in enumerate(grid_y):
@@ -102,27 +65,25 @@ for i, yi in enumerate(grid_x):
         img = img.reshape((1,) + img.shape) # (1,64,64)
         img = img.astype('float32') / 255.
         img = img.reshape((img.shape[0],) + conv_VAE.Settings.full_img_size) # (1,64,64,1)
-        generated_images_test_conv.append(img)
+        generated_images_conv.append(img)
 
-all_images_test_conv = np.concatenate([all_images_test_conv, np.concatenate(generated_images_test_conv)])
-print 'all_images_test_conv.shape is ', all_images_test_conv.shape
+fake_cnn_train = generated_images_conv[0:4] # 4 images
+fake_cnn_test = generated_images_conv[-5:] # 5 images
 
-# DENSE
+fake_cnn_train = np.concatenate(fake_cnn_train)
+fake_cnn_test = np.concatenate(fake_cnn_test)
+
+#--------------------
 
 load_x_train_dense = [dense_VAE.load_image(image) for image in train_images]
 load_x_test_dense = [dense_VAE.load_image(image) for image in test_images]
 
-# first is real images
-
 x_train_dense = np.concatenate(load_x_train_dense)
 x_test_dense = np.concatenate(load_x_test_dense)
 
-y_train_dense = [1] * len(x_train_dense)
-y_test_dense = [1] * len(x_test_dense)
+all_real_images_dense = np.concatenate([x_train_dense, x_test_dense])
 
-#----
-
-dense_VAE.Settings.num_of_epoch = 100
+dense_VAE.Settings.num_of_epoch = EPOCH
 
 vae = dense_VAE.VAE()
 vae_model = vae.get_VAE_model()
@@ -131,105 +92,80 @@ decoder = vae.get_decoder_model()
 
 vae_model.compile(optimizer='rmsprop', loss=vae.loss)
 vae_model.summary() # log
-vae_model.fit(x_train_dense, x_train_dense,
+vae_model.fit(all_real_images_dense, all_real_images_dense,
               shuffle=True,
-              epochs=conv_VAE.Settings.num_of_epoch,
-              batch_size=conv_VAE.Settings.batch_size,
-              validation_data=(x_train_dense, x_train_dense))
+              epochs=dense_VAE.Settings.num_of_epoch,
+              batch_size=dense_VAE.Settings.batch_size,
+              validation_data=(all_real_images_dense, all_real_images_dense))
 
 n = 3 # 9 fake images
 img_size = 64
-grid_x = np.linspace(-2.0, 2.0, n)
-grid_y = np.linspace(-2.0, 2.0, n)
+grid_x = np.linspace(-1.0, 1.0, n)
+grid_y = np.linspace(-1.0, 1.0, n)
 
-all_labels_train_dense = y_train_dense + [0] * (n*n)
-all_images_train_dense = x_train_conv
-
-generated_images_train_dense = []
+generated_images_dense = []
 
 for i, yi in enumerate(grid_x):
     for j, xi in enumerate(grid_y):
         z_sample = np.array([[xi, yi]])
+        z_sample = np.tile(z_sample, dense_VAE.Settings.batch_size).reshape(dense_VAE.Settings.batch_size, conv_VAE.Settings.latent_dim)
         x_decoded = decoder.predict(z_sample, batch_size=dense_VAE.Settings.batch_size)
         img = x_decoded[0].reshape(img_size, img_size) # (64,64)
-        img = img.reshape((1,) + img.shape) # (1,64,64)
         img = img.astype('float32') / 255.
-        img = img.reshape(img.shape + (1,))
+        img = img.reshape((1,) + img.shape + (1,)) # (1,64,64,1)
         print 'img.shape is ', img.shape
-        generated_images_train_dense.append(img)
+        generated_images_dense.append(img)
 
-all_images_train_dense = np.concatenate([all_images_train_dense, np.concatenate(generated_images_train_dense)])
-print 'all_images_train_dense.shape is ', all_images_train_dense.shape
+fake_fn_train = generated_images_dense[0:4] # 4 train images
+fake_fn_test = generated_images_dense[-5:] # 5 test images
 
-#----
+fake_fn_train = np.concatenate(fake_fn_train)
+fake_fn_test = np.concatenate(fake_fn_test)
 
-dense_VAE.Settings.num_of_epoch = 100
+#-----------
+# TRAINING CNN MODEL
 
-vae = dense_VAE.VAE()
-vae_model = vae.get_VAE_model()
-encoder = vae.get_encoder_model()
-decoder = vae.get_decoder_model()
+y_train_real = [1] * 9
+y_fake_cnn = [0] * 4
+y_train_labels_cnn = y_train_real + y_fake_cnn # real + fake
 
-vae_model.compile(optimizer='rmsprop', loss=vae.loss)
-vae_model.summary() # log
-vae_model.fit(x_test_dense, x_test_dense,
-              shuffle=True,
-              epochs=conv_VAE.Settings.num_of_epoch,
-              batch_size=conv_VAE.Settings.batch_size,
-              validation_data=(x_test_dense, x_test_dense))
+x_train_cnn = np.concatenate([x_train_conv, fake_cnn_train])
 
-n = 3 # 9 fake images
-img_size = 64
-grid_x = np.linspace(-2.0, 2.0, n)
-grid_y = np.linspace(-2.0, 2.0, n)
+dis_model.epochs = EPOCH
+model = dis_model.load(x_train=x_train_cnn, y_train=y_train_labels_cnn, x_test=x_train_cnn, y_test=y_train_labels_cnn)
 
-all_labels_test_dense = y_test_dense + [0] * (n*n)
-all_images_test_dense = x_test_conv
+x_test_cnn = np.concatenate([x_test_conv, fake_cnn_test])
+y_test_labels_cnn = y_train_real + [0] * 5
+y_test_labels_cnn = keras.utils.to_categorical(y_test_labels_cnn, 2)
 
-generated_images_test_dense = []
-
-for i, yi in enumerate(grid_x):
-    for j, xi in enumerate(grid_y):
-        z_sample = np.array([[xi, yi]])
-#        z_sample = np.tile(z_sample, conv_VAE.Settings.batch_size).reshape(conv_VAE.Settings.batch_size, conv_VAE.Settings.latent_dim)
-        x_decoded = decoder.predict(z_sample, batch_size=conv_VAE.Settings.batch_size)
-        img = x_decoded[0].reshape(img_size, img_size) # (64,64)
-        img = img.reshape((1,) + img.shape) # (1,64,64)
-        img = img.astype('float32') / 255.
-        img = img.reshape(img.shape + (1,))
-        print 'img.shape is ', img.shape
-        generated_images_test_dense.append(img)
-
-all_images_test_dense = np.concatenate([all_images_test_dense, np.concatenate(generated_images_test_dense)])
-print 'all_images_test_dense.shape is ', all_images_test_dense.shape
-
-# Now we have 9 conv fake images, 9 dense fake images and 10 real images
-
-# TRAINING MODEL
-
-all_train_images = np.concatenate([all_images_train_conv, all_images_train_dense])
-all_train_labels = all_labels_train_conv + all_labels_train_dense
-
-all_train_images = np.concatenate([all_images_test_conv, all_images_test_dense])
-all_train_labels = all_labels_test_conv + all_labels_test_dense
-
-dis_model.epochs = 50
-model = dis_model.load(x_train=all_train_images, y_train=all_train_labels, x_test=all_train_images, y_test=all_train_labels)
-#print model.predict(generated_images_train[0])
-#print model.predict(load_x_train[0])
-
-all_labels_test_conv = keras.utils.to_categorical(all_labels_test_conv, 2)
-test_score_conv = model.evaluate(all_images_test_conv, all_labels_test_conv, verbose=0) # for test
+test_score_conv = model.evaluate(x_test_cnn, y_test_labels_cnn, verbose=0) # for test
 print('Test CONV loss:', test_score_conv[0])
 print('Test CONV accuracy:', test_score_conv[1])
 print("Baseline CONV Error: %.2f%%" % (100-test_score_conv[1]*100))
 
-all_labels_test_dense = keras.utils.to_categorical(all_labels_test_dense, 2)
-test_score_dense = model.evaluate(all_images_test_dense, all_labels_test_dense, verbose=0) # for test
-print('Test dense loss:', test_score_dense[0])
-print('Test dense accuracy:', test_score_dense[1])
-print("Baseline dense Error: %.2f%%" % (100-test_score_dense[1]*100))
+#-----------
+# TRAINING FN MODEL
 
+y_train_real = [1] * 9
+y_fake_fn = [0] * 4
+y_train_labels_fn = y_train_real + y_fake_fn # real + fake
 
+print 'x_train_dense.shape is ', x_train_conv.shape
+print 'fake_fn_train.shape is ', fake_fn_train.shape
+
+x_train_fn = np.concatenate([x_train_conv, fake_fn_train])
+
+dis_model.epochs = EPOCH
+model = dis_model.load(x_train=x_train_fn, y_train=y_train_labels_fn, x_test=x_train_fn, y_test=y_train_labels_fn)
+
+x_test_fn = np.concatenate([x_test_conv, fake_fn_test])
+y_test_labels_fn = y_train_real + [0] * 5
+y_test_labels_fn = keras.utils.to_categorical(y_test_labels_fn, 2)
+
+test_score_conv = model.evaluate(x_test_fn, y_test_labels_fn, verbose=0) # for test
+print('Test FN loss:', test_score_conv[0])
+print('Test FN accuracy:', test_score_conv[1])
+print("Baseline FN Error: %.2f%%" % (100-test_score_conv[1]*100))
+print(model.metrics_names)
 
 
