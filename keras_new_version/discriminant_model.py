@@ -31,7 +31,7 @@ def createModel():
                 activation='relu')(x) # 16x16
     x = Flatten()(x) # 256
     x = Dropout(0.5)(x)
-    decoded = Dense(num_classes, activation='softmax')(x)
+    decoded = Dense(num_classes, activation='sigmoid')(x)
     return Model(input_layer, decoded)
 
 def load(x_train, y_train, x_test, y_test):
