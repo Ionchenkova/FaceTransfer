@@ -1,8 +1,9 @@
 from __future__ import print_function
-import keras
-from keras.layers import Dense, Dropout, Flatten
+from keras.models import Model
+from keras.layers import Dense, Dropout, Flatten, Input
 from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
+import keras
 
 batch_size = 10
 num_classes = 2 # real or fake image
@@ -17,7 +18,7 @@ def createModel():
     x = Conv2D(filters=8, 
                 kernel_size=(5, 5), 
                 padding='same', 
-                activation='relu')(x) # 64x64
+                activation='relu')(input_layer) # 64x64
     x = MaxPooling2D(pool_size=(2, 2))(x) # 32x32
     x = Conv2D(filters=16,
                 kernel_size=(5, 5), 
@@ -59,3 +60,5 @@ def load(x_train, y_train, x_test, y_test):
     score = model.evaluate(x_test, y_test, verbose=0)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
+    print("Baseline Error: %.2f%%" % (100-score[1]*100))
+    return model
