@@ -10,12 +10,12 @@ from glob import glob
 # 1 is real
 # 0 is fake
 
-EPOCH = 50
+EPOCH = 200
 
 # CONV
 
-train_images = glob("/Users/Maria/Documents/input_faces/train/*.jpg") # 9 images now
-test_images = glob("/Users/Maria/Documents/input_faces/test/*.jpg") # 9 images now
+train_images = glob("/Users/Maria/Documents/input_faces/train/*.jpg") # 25 images now
+test_images = glob("/Users/Maria/Documents/input_faces/test/*.jpg") # 25 images now
 load_x_train_conv = [conv_VAE.load_image(image) for image in train_images]
 load_x_test_conv = [conv_VAE.load_image(image) for image in test_images]
 
@@ -30,7 +30,7 @@ y_test_conv = [1] * len(load_x_test_conv)
 
 #--------------------
 
-all_real_images_conv = np.concatenate([x_train_conv, x_test_conv]) # all real images, shape is (18, 64, 64, 1)
+all_real_images_conv = np.concatenate([x_train_conv, x_test_conv]) # all real images, shape is (50, 64, 64, 1)
 
 #--------------------
 
@@ -49,7 +49,7 @@ vae_model.fit(all_real_images_conv, all_real_images_conv,
               batch_size=conv_VAE.Settings.batch_size,
               validation_data=(all_real_images_conv, all_real_images_conv))
 
-n = 3 # 9 fake images
+n = 7 # 49 fake images
 img_size = 64
 grid_x = np.linspace(-1.0, 1.0, n)
 grid_y = np.linspace(-1.0, 1.0, n)
@@ -67,8 +67,8 @@ for i, yi in enumerate(grid_x):
         img = img.reshape((img.shape[0],) + conv_VAE.Settings.full_img_size) # (1,64,64,1)
         generated_images_conv.append(img)
 
-fake_cnn_train = generated_images_conv[0:4] # 4 images
-fake_cnn_test = generated_images_conv[-5:] # 5 images
+fake_cnn_train = generated_images_conv[0:24] # 24 images
+fake_cnn_test = generated_images_conv[-25:] # 25 images
 
 fake_cnn_train = np.concatenate(fake_cnn_train)
 fake_cnn_test = np.concatenate(fake_cnn_test)
@@ -98,7 +98,7 @@ vae_model.fit(all_real_images_dense, all_real_images_dense,
               batch_size=dense_VAE.Settings.batch_size,
               validation_data=(all_real_images_dense, all_real_images_dense))
 
-n = 3 # 9 fake images
+n = 7 # 49 fake images
 img_size = 64
 grid_x = np.linspace(-1.0, 1.0, n)
 grid_y = np.linspace(-1.0, 1.0, n)
@@ -116,8 +116,8 @@ for i, yi in enumerate(grid_x):
         print 'img.shape is ', img.shape
         generated_images_dense.append(img)
 
-fake_fn_train = generated_images_dense[0:4] # 4 train images
-fake_fn_test = generated_images_dense[-5:] # 5 test images
+fake_fn_train = generated_images_dense[0:24] # 24 train images
+fake_fn_test = generated_images_dense[-25:] # 25 test images
 
 fake_fn_train = np.concatenate(fake_fn_train)
 fake_fn_test = np.concatenate(fake_fn_test)
@@ -125,8 +125,8 @@ fake_fn_test = np.concatenate(fake_fn_test)
 #-----------
 # TRAINING CNN MODEL
 
-y_train_real = [1] * 9
-y_fake_cnn = [0] * 4
+y_train_real = [1] * 25
+y_fake_cnn = [0] * 24
 y_train_labels_cnn = y_train_real + y_fake_cnn # real + fake
 
 x_train_cnn = np.concatenate([x_train_conv, fake_cnn_train])
@@ -135,7 +135,7 @@ dis_model.epochs = EPOCH
 model = dis_model.load(x_train=x_train_cnn, y_train=y_train_labels_cnn, x_test=x_train_cnn, y_test=y_train_labels_cnn)
 
 x_test_cnn = np.concatenate([x_test_conv, fake_cnn_test])
-y_test_labels_cnn = y_train_real + [0] * 5
+y_test_labels_cnn = y_train_real + [0] * 25
 y_test_labels_cnn = keras.utils.to_categorical(y_test_labels_cnn, 2)
 
 test_score_conv = model.evaluate(x_test_cnn, y_test_labels_cnn, verbose=0) # for test
@@ -146,8 +146,8 @@ print("Baseline CONV Error: %.2f%%" % (100-test_score_conv[1]*100))
 #-----------
 # TRAINING FN MODEL
 
-y_train_real = [1] * 9
-y_fake_fn = [0] * 4
+y_train_real = [1] * 25
+y_fake_fn = [0] * 24
 y_train_labels_fn = y_train_real + y_fake_fn # real + fake
 
 print 'x_train_dense.shape is ', x_train_conv.shape
@@ -159,7 +159,7 @@ dis_model.epochs = EPOCH
 model = dis_model.load(x_train=x_train_fn, y_train=y_train_labels_fn, x_test=x_train_fn, y_test=y_train_labels_fn)
 
 x_test_fn = np.concatenate([x_test_conv, fake_fn_test])
-y_test_labels_fn = y_train_real + [0] * 5
+y_test_labels_fn = y_train_real + [0] * 25
 y_test_labels_fn = keras.utils.to_categorical(y_test_labels_fn, 2)
 
 test_score_conv = model.evaluate(x_test_fn, y_test_labels_fn, verbose=0) # for test
