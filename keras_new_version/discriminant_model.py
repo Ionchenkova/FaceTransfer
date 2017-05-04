@@ -1,7 +1,7 @@
 from __future__ import print_function
-from keras.models import Model
+from keras.models import Model, Sequential
 from keras.layers import Dense, Dropout, Flatten, Input
-from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Conv2D, MaxPooling2D, Activation
 from keras import backend as K
 import keras
 
@@ -14,25 +14,27 @@ img_rows, img_cols = 64, 64
 full_img_size = (img_rows, img_cols, 1)
 
 def createModel():
-    input_layer = Input(shape=full_img_size)
-    x = Conv2D(filters=8, 
-                kernel_size=(5, 5), 
-                padding='same', 
-                activation='relu')(input_layer) # 64x64
-    x = MaxPooling2D(pool_size=(2, 2))(x) # 32x32
-    x = Conv2D(filters=16,
-                kernel_size=(5, 5), 
-                padding='same', 
-                activation='relu')(x) # 32x32
-    x = MaxPooling2D(pool_size=(2, 2))(x) # 16x16
-    x = Conv2D(filters=16, 
-                kernel_size=(5, 5), 
-                padding='same', 
-                activation='relu')(x) # 16x16
-    x = Flatten()(x) # 256
-    x = Dropout(0.5)(x)
-    decoded = Dense(num_classes, activation='sigmoid')(x)
-    return Model(input_layer, decoded)
+    model = Sequential()
+    model.add(Conv2D(filters=8,
+                        kernel_size=(5, 5),
+                        padding='same',
+                        input_shape=full_img_size))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Conv2D(filters=16,
+                     kernel_size=(5, 5),
+                     padding='same'))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Conv2D(filters=16,
+                     kernel_size=(5, 5),
+                     padding='same'))
+    model.add(Activation('relu'))
+    model.add(Flatten())
+    model.add(Dropout(0.5))
+    model.add(Dense(num_classes))
+    model.add(Activation('softmax'))
+    return model
 
 def load(x_train, y_train, x_test, y_test):
     x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
