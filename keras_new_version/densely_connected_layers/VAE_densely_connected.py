@@ -28,10 +28,8 @@ class Settings:
 
 def load_image(image_path):
     grayImage = misc.imread(image_path, mode="L") # shape is (x,x)
-    x_train = grayImage.reshape((1,) + grayImage.shape) # shape is (1,x,x)
-    x_train = x_train.astype('float32') / 255.
-    x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:]))) # shape is (1, x)
-    print(x_train.shape)
+    x_train = grayImage.astype('float32') / 255.
+    x_train = x_train.reshape((1, np.prod(x_train.shape[:]))) # shape is (1, x*x*chnl)
     return x_train
 
 def show_images(decoder, n=10, img_size=Settings.img_size_rows):
