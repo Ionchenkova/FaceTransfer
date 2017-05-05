@@ -8,8 +8,8 @@ import numpy as np
 
 from glob import glob
 
-# 1 is real
-# 0 is fake
+# 0 is real
+# 1 is fake
 
 EPOCH_VAE = 1
 EPOCH_DIS = 1
@@ -29,7 +29,28 @@ def printMetrix(model, x_test, y_test_labels):
     # Fp | Tn
     print(confusion_matrix(y_test_labels, y_pred))
 
-# CONV
+def trainDiscrModel(x_trein_real, x_train_fake):
+    y_train_real = [0.] * 25
+    y_train_fake = [1.] * 24
+    y_train_labels = y_train_real + y_train_fake # 49 real + fake
+    x_train = np.concatenate([x_trein_real, x_train_fake])
+    dis_model.epochs = EPOCH_DIS
+    model = dis_model.load(x_train=x_train, y_train=y_train_labels, x_test=x_train, y_test=y_train_labels)
+    return model
+
+def testDiscrModel(model, x_test_real, x_test_fake):
+    x_test = np.concatenate([x_test_real, x_test_fake])
+    y_test_real = [0.] * 25
+    y_test_fake = [1.] * 25
+    y_test_labels = y_test_real + y_test_fake
+    test_score = model.evaluate(x_test, y_test_labels, verbose=0) # for test
+    print('Test CONV loss:', test_score[0])
+    print('Test CONV accuracy:', test_score[1])
+    print("Baseline CONV Error: %.2f%%" % (100-test_score[1]*100))
+    printMetrix(model, x_test, y_test_labels)
+
+print('--------------------------------------------------------------------------------------------------------')
+print('-------------------------------------------------- CNN -------------------------------------------------')
 
 train_images = glob("/Users/Maria/Documents/input_faces/train/*.jpg") # 25 images now
 test_images = glob("/Users/Maria/Documents/input_faces/test/*.jpg") # 25 images now
@@ -93,7 +114,8 @@ print 'fake_cnn_test len is ', len(fake_cnn_test)
 fake_cnn_train = np.concatenate(fake_cnn_train)
 fake_cnn_test = np.concatenate(fake_cnn_test)
 
-#--------------------
+print('--------------------------------------------------------------------------------------------------------')
+print('-------------------------------------------------- FN --------------------------------------------------')
 
 load_x_train_dense = [dense_VAE.load_image(image) for image in train_images]
 load_x_test_dense = [dense_VAE.load_image(image) for image in test_images]
@@ -141,57 +163,23 @@ fake_fn_test = generated_images_dense[-25:] # 25 test images
 fake_fn_train = np.concatenate(fake_fn_train)
 fake_fn_test = np.concatenate(fake_fn_test)
 
-print('-------------------------------------------------- CNN ------------------------------------------------')
+print('--------------------------------------------------------------------------------------------------------')
+print('-------------------------------------------------- CNN -------------------------------------------------')
 
-y_train_real = [0.] * 25
-y_fake_cnn = [1.] * 24
-y_train_labels_cnn = y_train_real + y_fake_cnn # real + fake
+model_cnn = trainDiscrModel(x_trein_real=x_train_conv,
+                            x_train_fake=fake_cnn_train)
 
-x_train_cnn = np.concatenate([x_train_conv, fake_cnn_train])
-
-dis_model.epochs = EPOCH_DIS
-model = dis_model.load(x_train=x_train_cnn, y_train=y_train_labels_cnn, x_test=x_train_cnn, y_test=y_train_labels_cnn)
-
-x_test_cnn = np.concatenate([x_test_conv, fake_cnn_test])
-y_test_labels_cnn = y_train_real + [1.] * 25
-
-test_score_conv = model.evaluate(x_test_cnn, y_test_labels_cnn, verbose=0) # for test
-print('Test CONV loss:', test_score_conv[0])
-print('Test CONV accuracy:', test_score_conv[1])
-print("Baseline CONV Error: %.2f%%" % (100-test_score_conv[1]*100))
-
-print('-------------------------------------------- CNN METRICS -----------------------------------------------')
-
-printMetrix(model, x_test_cnn, y_test_labels_cnn)
+testDiscrModel(model=model_cnn,
+               x_test_real=x_test_conv,
+               x_test_fake=fake_cnn_test)
 
 print('--------------------------------------------------------------------------------------------------------')
 print('-------------------------------------------------- FN --------------------------------------------------')
 
-y_train_real = [0.] * 25
-y_fake_fn = [1.] * 24
-y_train_labels_fn = y_train_real + y_fake_fn # real + fake
+model_fn = trainDiscrModel(x_trein_real=x_train_conv,
+                           x_train_fake=fake_fn_train)
 
-print 'x_train_dense.shape is ', x_train_conv.shape
-print 'fake_fn_train.shape is ', fake_fn_train.shape
-
-x_train_fn = np.concatenate([x_train_conv, fake_fn_train])
-
-dis_model.epochs = EPOCH_DIS
-model = dis_model.load(x_train=x_train_fn, y_train=y_train_labels_fn, x_test=x_train_fn, y_test=y_train_labels_fn)
-
-x_test_fn = np.concatenate([x_test_conv, fake_fn_test])
-y_test_labels_fn = y_train_real + [1.] * 25
-#y_test_labels_fn = keras.utils.to_categorical(y_test_labels_fn, 2)
-
-test_score_conv = model.evaluate(x_test_fn, y_test_labels_fn, verbose=0) # for test
-print('Test FN loss:', test_score_conv[0])
-print('Test FN accuracy:', test_score_conv[1])
-print("Baseline FN Error: %.2f%%" % (100-test_score_conv[1]*100))
-print(model.metrics_names)
-print('--------------------------------------------------------------------------------------------------------')
-print('-------------------------------------------- FN METRICS -----------------------------------------------')
-
-printMetrix(model, x_test_fn, y_test_labels_fn)
-
-print('--------------------------------------------------------------------------------------------------------')
+testDiscrModel(model=model_fn,
+               x_test_real=x_test_conv,
+               x_test_fake=fake_fn_test)
 
