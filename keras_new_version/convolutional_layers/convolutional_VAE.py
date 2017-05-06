@@ -1,6 +1,6 @@
 from keras.layers import Input, Dense, Lambda, Flatten, Reshape
 from keras.layers import Conv2D, AveragePooling2D, UpSampling2D, Conv2DTranspose
-from keras.models import Model
+from keras.models import Model, Sequential
 from keras import backend as K
 from keras import metrics
 from scipy import misc
@@ -22,7 +22,7 @@ class Settings:
     latent_dim = 2
     intermediate_dim = 128
     epsilon = 1.0
-    num_of_epoch = 10
+    num_of_epoch = 100
     min_input = -2.0
     max_input = 2.0
     log = True
@@ -65,12 +65,33 @@ def show_images(decoder, n=10, img_size=Settings.img_size_rows):
     
     plt.show()
 
+def showOutputOfModel(model):
+    conv_output = model.predict(x_train)
+    im = conv_output
+    count_of_images = conv_output.shape[0]
+    size = conv_output.shape[1]
+    count_filters = conv_output.shape[3]
+    
+    figure = np.zeros((size * count_of_images, size * count_filters))
+    
+    for i in range(count_of_images):
+        for j in range(count_filters):
+            tmp_im = np.zeros((size,size))
+            tmp_im[:,:] = im[i,:,:,j]
+            tmp_im = tmp_im.reshape(size, size)
+            figure[i * size: (i + 1) * size,
+                   j * size: (j + 1) * size] = tmp_im
+
+    plt.figure(figsize=(10, 10))
+    plt.imshow(figure, cmap='Greys_r')
+    plt.show()
+
 class VAE:
     def __init__(self):
         # CODER
         self.input_layer = Input(shape=Settings.full_img_size)
-        self.conv_layer_1 = Conv2D(filters=8, 
-                                    kernel_size=(5, 5), 
+        self.conv_layer_1 = Conv2D(filters=8,
+                                    kernel_size=(5, 5),
                                     padding='same',
                                     strides=(1, 1), 
                                     activation='relu')(self.input_layer) # (64,64,8)
@@ -134,6 +155,9 @@ class VAE:
         kl_loss = 0.5 * K.sum(K.exp(self.z_random) + K.square(self.z_mean) - 1. - self.z_random, axis=1)
         return xent_loss + kl_loss
     
+    def get_conv_model(self):
+        return Model(self.input_layer, self.conv_3_decoded) # conv_layer_1, conv_layer_2, conv_layer_3
+    
     def get_VAE_model(self):
         return Model(self.input_layer, self.conv_2_decoded)
     
@@ -151,7 +175,7 @@ class VAE:
         return Model(decoder_input, conv_2_decoded)
 
 if __name__ == "__main__":
-    images = glob("/Users/Maria/Documents/input_faces/test/*.jpg")
+    images = glob("/Users/Maria/Documents/input_faces/*.jpg")
     load_x_train = [load_image(image) for image in images]
     x_train = np.concatenate(load_x_train)
     
@@ -160,6 +184,7 @@ if __name__ == "__main__":
     encoder = vae.get_encoder_model()
     decoder = vae.get_decoder_model()
     
+    
     vae_model.compile(optimizer='rmsprop', loss=vae.loss)
     vae_model.summary() # log
     vae_model.fit(x_train, x_train,
@@ -167,5 +192,10 @@ if __name__ == "__main__":
                   epochs=Settings.num_of_epoch,
                   batch_size=Settings.batch_size,
                   validation_data=(x_train, x_train))
+    
+    # Show output of conv layer
+    conv_model = vae.get_conv_model()
+    showOutputOfModel(conv_model)
 
+    # Show decoder output
     show_images(decoder, n=20)
