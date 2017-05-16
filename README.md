@@ -8,8 +8,14 @@ Demo (real size of image is 64x64):
   <img src="https://github.com/Ionchenkova/FaceTransfer/blob/master/demo.gif">
 </p>
 
-Convalution network with 4 latent vars (25 images):
+Convolution network with 4 latent vars (25 images):
 
 <p align="center">
     <img src="https://github.com/Ionchenkova/FaceTransfer/blob/master/demo_conv_4_var.gif">
+</p>
+
+Dense network with 4 latent vars (25 images):
+
+<p align="center">
+    <img src="https://github.com/Ionchenkova/FaceTransfer/blob/master/demo_dens_4.gif">
 </p>
