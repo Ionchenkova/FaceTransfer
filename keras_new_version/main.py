@@ -7,12 +7,13 @@ import keras
 import numpy as np
 from glob import glob
 from scipy import misc
+from random import randint
 
 # 0 is real
 # 1 is fake
 
-EPOCH_VAE = 100
-EPOCH_DIS = 10
+EPOCH_VAE = 200
+EPOCH_DIS = 50
 
 def load_image(image_path):
     grayImage = misc.imread(image_path, mode="L")
@@ -52,7 +53,7 @@ def testDiscrModel(model, x_test_real, x_test_fake):
     test_score = model.evaluate(x_test, y_test_labels, verbose=0) # for test
     print('Test loss:', test_score[0])
     print('Test accuracy:', test_score[1])
-    print("Baseline CONV Error: %.2f%%" % (100-test_score[1]*100))
+    print("Baseline  Error: %.2f%%" % (100-test_score[1]*100))
     printMetrix(model, x_test, y_test_labels)
 
 train_images = glob("/Users/Maria/Documents/input_faces/train/*.jpg") # 25 images now
@@ -72,7 +73,7 @@ all_real_images = np.concatenate([x_train_real_image, x_test_real_image]) # all 
 print('--------------------------------------------------------------------------------------------------------')
 print('-------------------------------------------------- CNN -------------------------------------------------')
 
-conv_VAE.Settings.num_of_epoch = 1
+conv_VAE.Settings.num_of_epoch = EPOCH_VAE
 
 vae = conv_VAE.VAE()
 vae_model = vae.get_VAE_model()
@@ -89,14 +90,14 @@ vae_model.fit(all_real_images, all_real_images,
 
 n = 7 # 49 fake images
 img_size = 64
-grid_x = np.linspace(-1.0, 1.0, n)
-grid_y = np.linspace(-1.0, 1.0, n)
+grid_x = np.linspace(-3.0, 3.0, n)
+grid_y = np.linspace(-3.0, 3.0, n)
 
 generated_images_conv = [] # array of NORM ([0..1]) fake images
 
 for i, yi in enumerate(grid_x):
     for j, xi in enumerate(grid_y):
-        z_sample = np.array([[xi, yi]])
+        z_sample = np.array([[xi, yi, grid_x[randint(0,n-1)], grid_y[randint(0,n-1)]]])
         z_sample = np.tile(z_sample, conv_VAE.Settings.batch_size).reshape(conv_VAE.Settings.batch_size, conv_VAE.Settings.latent_dim)
         x_decoded = decoder.predict(z_sample, batch_size=conv_VAE.Settings.batch_size)
         img = x_decoded[0].reshape(img_size, img_size) # get norm image (64,64)
@@ -145,7 +146,7 @@ generated_images_dense = []
 
 for i, yi in enumerate(grid_x):
     for j, xi in enumerate(grid_y):
-        z_sample = np.array([[xi, yi]])
+        z_sample = np.array([[xi, yi, grid_x[randint(0,n-1)], grid_y[randint(0,n-1)]]])
         z_sample = np.tile(z_sample, dense_VAE.Settings.batch_size).reshape(dense_VAE.Settings.batch_size, conv_VAE.Settings.latent_dim)
         x_decoded = decoder.predict(z_sample, batch_size=dense_VAE.Settings.batch_size)
         img = x_decoded[0].reshape(img_size, img_size) # (64,64)
