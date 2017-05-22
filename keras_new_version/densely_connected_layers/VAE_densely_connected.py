@@ -6,6 +6,8 @@ from keras import metrics
 from scipy import misc
 from glob import glob
 from matplotlib.widgets import Slider
+from keras.optimizers import RMSprop, SGD
+from keras.utils import plot_model
 
 import pylab
 import matplotlib.pyplot as plt
@@ -16,14 +18,15 @@ class Settings:
     img_size_cols = 64
     img_size_chnl = 1
     full_img_size = img_size_rows * img_size_cols * img_size_chnl
+    full_size = (img_size_rows, img_size_cols, img_size_chnl)
     batch_size = 1
-    latent_dim = 2
+    latent_dim = 4
     high_dim = 256
     low_dim = 64
     epsilon = 1.0
     min_input = -3.0
     max_input = 3.0
-    num_of_epoch = 100
+    num_of_epoch = 1
     log = True
 
 def load_image(image_path):
@@ -34,9 +37,9 @@ def load_image(image_path):
 
 def show_images(decoder, n=10, img_size=Settings.img_size_rows):
     ax = plt.subplot(111)
-    plt.subplots_adjust(left=0.25, bottom=0.25)
+    plt.subplots_adjust(left=0.25, bottom=0.45)
 
-    z_sample = np.array([[0.0, 0.0]]) * Settings.epsilon
+    z_sample = np.array([[0.0, 0.0, 0.0, 0.0]]) * Settings.epsilon
     x_decoded = decoder.predict(z_sample)
     image = x_decoded[0].reshape(img_size, img_size)
 
@@ -44,23 +47,31 @@ def show_images(decoder, n=10, img_size=Settings.img_size_rows):
     cb = plt.colorbar(img)
     axcolor = 'lightgoldenrodyellow'
 
-    ax_cmin = plt.axes([0.25, 0.1, 0.65, 0.03])
-    ax_cmax  = plt.axes([0.25, 0.15, 0.65, 0.03])
+    ax_1 = plt.axes([0.25, 0.1, 0.65, 0.03])
+    ax_2  = plt.axes([0.25, 0.15, 0.65, 0.03])
+    ax_3  = plt.axes([0.25, 0.2, 0.65, 0.03])
+    ax_4  = plt.axes([0.25, 0.25, 0.65, 0.03])
 
-    s_first = Slider(ax_cmin, 'first', Settings.min_input, Settings.max_input, valinit=0)
-    s_second = Slider(ax_cmax, 'second', Settings.min_input, Settings.max_input, valinit=0)
+    s_1 = Slider(ax_1, '1', Settings.min_input, Settings.max_input, valinit=0)
+    s_2 = Slider(ax_2, '2', Settings.min_input, Settings.max_input, valinit=0)
+    s_3 = Slider(ax_3, '3', Settings.min_input, Settings.max_input, valinit=0)
+    s_4 = Slider(ax_4, '4', Settings.min_input, Settings.max_input, valinit=0)
 
     def update(val):
-       _first = s_first.val
-       _second = s_second.val
-       z_sample = np.array([[_first, _second]]) * Settings.epsilon
+       _f_1 = s_1.val
+       _f_2 = s_2.val
+       _f_3 = s_3.val
+       _f_4 = s_4.val
+       z_sample = np.array([[_f_1, _f_2, _f_3, _f_4]]) * Settings.epsilon
        x_decoded = decoder.predict(z_sample)
        image = x_decoded[0].reshape(img_size, img_size)
        ax.imshow(image, cmap='Greys_r')
        plt.draw()
 
-    s_first.on_changed(update)
-    s_second.on_changed(update)
+    s_1.on_changed(update)
+    s_2.on_changed(update)
+    s_3.on_changed(update)
+    s_4.on_changed(update)
 
     plt.show()
 
@@ -97,10 +108,10 @@ class VAE:
 
     def loss(self, x, x_decoded_mean):
         # loss = reconstruction loss + KL loss
-        xent_loss = Settings.full_img_size * metrics.binary_crossentropy(x, x_decoded_mean)
+        xent_loss = Settings.full_size * metrics.binary_crossentropy(x, x_decoded_mean) # Settings.full_size *
         # Kullback-Leibler divergence
         # KL[q(z|x) || p(z)]
-        kl_loss = 0.5 * K.sum(K.exp(self.z_log_sigma) + K.square(self.z_mean) - 1. - self.z_log_sigma, axis=1)
+        kl_loss = 0.5 * K.sum(K.exp(self.z_log_sigma) + K.square(self.z_mean) - 1. - self.z_log_sigma, axis=-1)
         return xent_loss + kl_loss
 
     def get_VAE_model(self):
@@ -114,7 +125,7 @@ class VAE:
 
 if __name__ == "__main__":
     
-    images = glob("/Users/Maria/Documents/input_faces/*.jpg")
+    images = glob("/Users/Maria/Documents/input_faces/test/*.jpg")
     load_x_train = [load_image(image) for image in images]
     x_train = np.concatenate(load_x_train)
     
@@ -123,12 +134,17 @@ if __name__ == "__main__":
     encoder = vae.get_encoder_model()
     decoder = vae.get_decoder_model()
     vae_model.summary() # log
-    vae_model.compile(optimizer='rmsprop', loss=vae.loss)
+    prop = RMSprop(lr=0.001, rho=0.9, epsilon=1e-08, decay=0.0)
+    vae_model.compile(optimizer="rmsprop", loss=vae.loss)
     vae_model.fit(x_train, x_train,
               shuffle=True,
               epochs=Settings.num_of_epoch,
               batch_size=Settings.batch_size,
               validation_data=(x_train, x_train))
+    
+    plot_model(vae_model, to_file='/Users/Maria/Documents/FaceTransfer/keras_new_version/densely_connected_layers/vae_model.png', show_shapes=True)
+    plot_model(encoder, to_file='/Users/Maria/Documents/FaceTransfer/keras_new_version/densely_connected_layers/encoder.png', show_shapes=True)
+    plot_model(decoder, to_file='/Users/Maria/Documents/FaceTransfer/keras_new_version/densely_connected_layers/decoder.png', show_shapes=True)
 
     show_images(decoder, n=30)
 
