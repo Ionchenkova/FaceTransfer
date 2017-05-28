@@ -12,8 +12,8 @@ from random import randint
 # 0 is real
 # 1 is fake
 
-EPOCH_VAE = 200
-EPOCH_DIS = 50
+EPOCH_VAE = 100
+EPOCH_DIS = 30
 
 def load_image(image_path):
     grayImage = misc.imread(image_path, mode="L")
@@ -38,7 +38,7 @@ def printMetrix(model, x_test, y_test_labels):
 
 def trainDiscrModel(x_trein_real, x_train_fake):
     y_train_real = [0.] * 25
-    y_train_fake = [1.] * 24
+    y_train_fake = [1.] * 25
     y_train_labels = y_train_real + y_train_fake # 49 real + fake
     x_train = np.concatenate([x_trein_real, x_train_fake])
     dis_model.epochs = EPOCH_DIS
@@ -88,28 +88,42 @@ vae_model.fit(all_real_images, all_real_images,
               batch_size=conv_VAE.Settings.batch_size,
               validation_data=(all_real_images, all_real_images))
 
-n = 7 # 49 fake images
+n = 50 # 50 fake images
 img_size = 64
-grid_x = np.linspace(-3.0, 3.0, n)
-grid_y = np.linspace(-3.0, 3.0, n)
+m = 30
+grid = np.linspace(-2.8, 2.8, m)
 
 generated_images_conv = [] # array of NORM ([0..1]) fake images
 
-for i, yi in enumerate(grid_x):
-    for j, xi in enumerate(grid_y):
-        z_sample = np.array([[xi, yi, grid_x[randint(0,n-1)], grid_y[randint(0,n-1)]]])
-        z_sample = np.tile(z_sample, conv_VAE.Settings.batch_size).reshape(conv_VAE.Settings.batch_size, conv_VAE.Settings.latent_dim)
-        x_decoded = decoder.predict(z_sample, batch_size=conv_VAE.Settings.batch_size)
-        img = x_decoded[0].reshape(img_size, img_size) # get norm image (64,64)
-        misc.imsave('/Users/Maria/Documents/input_faces/fake_cnn/%d%d.jpg' % (i,j), img)
-        img = img.reshape((1,) + img.shape + (1,)) # size is (1,64,64,1)
-        generated_images_conv.append(img)
+for i in range(n):
+    z_sample = np.array([[grid[randint(0,m-1)], grid[randint(0,m-1)],
+                          grid[randint(0,m-1)], grid[randint(0,m-1)],
+                          grid[randint(0,m-1)], grid[randint(0,m-1)],
+                          grid[randint(0,m-1)], grid[randint(0,m-1)],
+                          grid[randint(0,m-1)], grid[randint(0,m-1)],
+                          grid[randint(0,m-1)], grid[randint(0,m-1)]]])
+    z_sample = np.tile(z_sample, conv_VAE.Settings.batch_size).reshape(conv_VAE.Settings.batch_size, conv_VAE.Settings.latent_dim)
+    x_decoded = decoder.predict(z_sample, batch_size=conv_VAE.Settings.batch_size)
+    img = x_decoded[0].reshape(img_size, img_size) # get norm image (64,64)
+    misc.imsave('/Users/Maria/Documents/input_faces/fake_cnn/%d.jpg' % (i), img)
+    img = img.reshape((1,) + img.shape + (1,)) # size is (1,64,64,1)
+    generated_images_conv.append(img)
 
-fake_cnn_train = generated_images_conv[0:24] # 24 images
+fake_cnn_train = generated_images_conv[0:25] # 25 images
 fake_cnn_test = generated_images_conv[-25:] # 25 images
 
 fake_cnn_train = np.concatenate(fake_cnn_train) # np.array of NORM ([0..1]) fake images for train
 fake_cnn_test = np.concatenate(fake_cnn_test) # np.array of NORM ([0..1]) fake images for test
+
+print('--------------------------------------------------------------------------------------------------------')
+print('-------------------------------------------------- CNN -------------------------------------------------')
+
+model_cnn = trainDiscrModel(x_trein_real=x_train_real_image,
+                            x_train_fake=fake_cnn_train)
+
+testDiscrModel(model=model_cnn,
+               x_test_real=x_test_real_image,
+               x_test_fake=fake_cnn_test)
 
 print('--------------------------------------------------------------------------------------------------------')
 print('-------------------------------------------------- FN --------------------------------------------------')
@@ -137,39 +151,33 @@ vae_model.fit(all_real_images_dense, all_real_images_dense,
               batch_size=dense_VAE.Settings.batch_size,
               validation_data=(all_real_images_dense, all_real_images_dense))
 
-n = 7 # 49 fake images
+n = 50 # 50 fake images
 img_size = 64
-grid_x = np.linspace(-3.0, 3.0, n)
-grid_y = np.linspace(-3.0, 3.0, n)
+m = 30
+grid = np.linspace(-2.8, 2.8, m)
 
 generated_images_dense = []
 
-for i, yi in enumerate(grid_x):
-    for j, xi in enumerate(grid_y):
-        z_sample = np.array([[xi, yi, grid_x[randint(0,n-1)], grid_y[randint(0,n-1)]]])
-        z_sample = np.tile(z_sample, dense_VAE.Settings.batch_size).reshape(dense_VAE.Settings.batch_size, conv_VAE.Settings.latent_dim)
-        x_decoded = decoder.predict(z_sample, batch_size=dense_VAE.Settings.batch_size)
-        img = x_decoded[0].reshape(img_size, img_size) # (64,64)
-        misc.imsave('/Users/Maria/Documents/input_faces/fake_fn/%d%d.jpg' % (i,j), img)
-        # SHOW IMAGES
-        img = img.reshape((1,) + img.shape + (1,)) # (1,64,64,1)
-        generated_images_dense.append(img)
+for i in range(n):
+    z_sample = np.array([[grid[randint(0,m-1)], grid[randint(0,m-1)],
+                          grid[randint(0,m-1)], grid[randint(0,m-1)],
+                          grid[randint(0,m-1)], grid[randint(0,m-1)],
+                          grid[randint(0,m-1)], grid[randint(0,m-1)],
+                          grid[randint(0,m-1)], grid[randint(0,m-1)],
+                          grid[randint(0,m-1)], grid[randint(0,m-1)]]])
+    z_sample = np.tile(z_sample, dense_VAE.Settings.batch_size).reshape(dense_VAE.Settings.batch_size, conv_VAE.Settings.latent_dim)
+    x_decoded = decoder.predict(z_sample, batch_size=dense_VAE.Settings.batch_size)
+    img = x_decoded[0].reshape(img_size, img_size) # (64,64)
+    misc.imsave('/Users/Maria/Documents/input_faces/fake_fn/%d.jpg' % (i), img)
+    # SHOW IMAGES
+    img = img.reshape((1,) + img.shape + (1,)) # (1,64,64,1)
+    generated_images_dense.append(img)
 
-fake_fn_train = generated_images_dense[0:24] # 24 train NORM images
+fake_fn_train = generated_images_dense[0:25] # 25 train NORM images
 fake_fn_test = generated_images_dense[-25:] # 25 test NORM images
 
 fake_fn_train = np.concatenate(fake_fn_train)
 fake_fn_test = np.concatenate(fake_fn_test)
-
-print('--------------------------------------------------------------------------------------------------------')
-print('-------------------------------------------------- CNN -------------------------------------------------')
-
-model_cnn = trainDiscrModel(x_trein_real=x_train_real_image,
-                            x_train_fake=fake_cnn_train)
-
-testDiscrModel(model=model_cnn,
-               x_test_real=x_test_real_image,
-               x_test_fake=fake_cnn_test)
 
 print('--------------------------------------------------------------------------------------------------------')
 print('-------------------------------------------------- FN --------------------------------------------------')
